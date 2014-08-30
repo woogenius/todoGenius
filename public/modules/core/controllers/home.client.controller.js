@@ -1,8 +1,8 @@
 'use strict';
 
 
-angular.module('core').controller('HomeController', ['$scope', '$stateParams', '$filter', 'Authentication', 'TodoStorage',
-	function($scope, $stateParams, $filter, Authentication, TodoStorage) {
+angular.module('core').controller('HomeController', ['$scope', '$location', '$filter', 'Authentication', 'TodoStorage',
+	function($scope, $location, $filter, Authentication, TodoStorage) {
 		// This provides Authentication context.
 		$scope.authentication = Authentication;
         $scope.newTodo = '';
@@ -21,7 +21,8 @@ angular.module('core').controller('HomeController', ['$scope', '$stateParams', '
 
         // Monitor the current route for changes and adjust the filter accordingly.
         $scope.$on('$stateChangeSuccess', function () {
-            var status = $scope.status = $stateParams.status || '';
+            var path = $location.path().split('/');
+            var status = $scope.status = path[path.length-1] || '';
 
             $scope.statusFilter = (status === 'active') ?
             { completed: false } : (status === 'completed') ?
@@ -34,7 +35,7 @@ angular.module('core').controller('HomeController', ['$scope', '$stateParams', '
                 return;
             }
 
-            $scope.todos.push({
+            todos.push({
                 title: newTodo,
                 completed: false
             });
@@ -50,7 +51,7 @@ angular.module('core').controller('HomeController', ['$scope', '$stateParams', '
         };
 
         $scope.removeTodo = function (todo) {
-            $scope.todos.splice($scope.todos.indexOf(todo), 1);
+            todos.splice(todos.indexOf(todo), 1);
         };
 
         $scope.doneEditing = function (todo) {
@@ -62,8 +63,21 @@ angular.module('core').controller('HomeController', ['$scope', '$stateParams', '
         };
 
         $scope.revertEditing = function (todo) {
-            $scope.todos[$scope.todos.indexOf(todo)] = $scope.originalTodo;
+            todos[todos.indexOf(todo)] = $scope.originalTodo;
             $scope.doneEditing($scope.originalTodo);
+        };
+
+        $scope.clearCompletedTodos = function () {
+            // filter 함수 정리하기!!
+            $scope.todos = todos = todos.filter(function (val) {
+                return !val.completed;
+            });
+        };
+
+        $scope.markAll = function (completed) {
+            todos.forEach(function (todo) {
+                todo.completed = !completed;
+            });
         };
 	}
 ]);

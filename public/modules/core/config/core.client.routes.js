@@ -12,8 +12,12 @@ angular.module('core').config(['$stateProvider', '$urlRouterProvider',
 			url: '/',
 			templateUrl: 'modules/core/views/home.client.view.html'
 		}).
-		state('moved', {
-			url: '/',
+		state('active', {
+			url: '/active',
+			templateUrl: 'modules/core/views/home.client.view.html'
+		}).
+		state('completed', {
+			url: '/completed',
 			templateUrl: 'modules/core/views/home.client.view.html'
 		});
 	}

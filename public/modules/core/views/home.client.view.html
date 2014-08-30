@@ -1,39 +1,39 @@
 <section data-ng-controller="HomeController">
-    <div class="container content">
+    <section class="container content">
         <form id="todo-form" ng-submit="addTodo()">
-            <input id="new-todo" placeholder="What needs to be done?" ng-model="newTodo" autofocus>
+            <input id="new-todo" placeholder="What needs to be done?" data-ng-model="newTodo" autofocus>
         </form>
-
-        <ul>
-            <li data-ng-repeat="todo in todos | orderBy: 'completed' | filter:statusFilter track by $index" data-ng-class="{completed: todo.completed, editing: todo == editingTodo}">
-                <div class="view" ng-hide="todo == editingTodo">
-                    <input class="toggle" type="checkbox" data-ng-model="todo.completed">
-                    <label data-ng-click="editTodo(todo)">{{todo.title}}</label>
-                    <button class="destroy" data-ng-click="removeTodo(todo)"></button>
-                </div>
-                <form data-ng-submit="doneEditing(todo)" data-ng-show="todo == editingTodo">
-                    <input class="edit" ng-trim="false" ng-model="todo.title" todo-escape="revertEditing(todo)" ng-blur="doneEditing(todo)" todo-focus="todo == editingTodo">
-                </form>
-            </li>
-        </ul>
-
-        <footer id="footer" ng-show="todos.length" ng-cloak>
+        <section id="main" ng-show="todos.length" data-ng-cloak>
+            <input id="toggle-all" type="checkbox" data-ng-model="allChecked" data-ng-click="markAll(allChecked)">
+            <ul>
+                <li data-ng-repeat="todo in todos | orderBy: 'completed' | filter:statusFilter track by $index" data-ng-class="{completed: todo.completed, editing: todo == editingTodo}">
+                    <div class="view" data-ng-hide="todo == editingTodo">
+                        <input class="toggle" type="checkbox" data-ng-model="todo.completed">
+                        <label data-ng-click="editTodo(todo)">{{todo.title}}</label>
+                        <button class="destroy" data-ng-click="removeTodo(todo)"></button>
+                    </div>
+                    <form data-ng-submit="doneEditing(todo)" data-ng-show="todo == editingTodo">
+                        <input class="edit" data-ng-trim="false" data-ng-model="todo.title" todo-escape="revertEditing(todo)" data-ng-blur="doneEditing(todo)" todo-focus="todo == editingTodo">
+                    </form>
+                </li>
+            </ul>
+            <footer id="footer">
 					<span id="todo-count"><strong>{{remainingCount}}</strong>
 						<ng-pluralize count="remainingCount" when="{ one: 'item left', other: 'items left' }"></ng-pluralize>
 					</span>
-            <ul id="filters">
-                <li>
-                    <a ng-class="{selected: status == ''} " href="#!/">All</a>
-                </li>
-                <li>
-                    <a ng-class="{selected: status == 'active'}" href="#!/active">Active</a>
-                </li>
-                <li>
-                    <a ng-class="{selected: status == 'completed'}" href="#!/completed">Completed</a>
-                </li>
-            </ul>
-            <button id="clear-completed" ng-click="clearCompletedTodos()" ng-show="completedCount">Clear completed ({{completedCount}})</button>
-        </footer>
-        {{status}}
-    </div>
+                <ul id="filters">
+                    <li>
+                        <a data-ng-class="{selected: status == ''} " href="#!/">All</a>
+                    </li>
+                    <li>
+                        <a data-ng-class="{selected: status == 'active'}" href="#!/active">Active</a>
+                    </li>
+                    <li>
+                        <a data-ng-class="{selected: status == 'completed'}" href="#!/completed">Completed</a>
+                    </li>
+                </ul>
+                <button id="clear-completed" data-ng-click="clearCompletedTodos()" data-ng-show="completedCount">Clear completed ({{completedCount}})</button>
+            </footer>
+        </section>
+    </section>
 </section>
