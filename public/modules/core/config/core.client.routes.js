@@ -13,8 +13,8 @@ angular.module('core').config(['$stateProvider', '$urlRouterProvider',
 			templateUrl: 'modules/core/views/home.client.view.html'
 		}).
 		state('moved', {
-			url: '/:status',
+			url: '/',
 			templateUrl: 'modules/core/views/home.client.view.html'
-		})
+		});
 	}
 ]);
