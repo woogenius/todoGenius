@@ -21,8 +21,10 @@ module.exports = {
 				'public/lib/angular-resource/angular-resource.js', 
 				'public/lib/angular-ui-router/release/angular-ui-router.js',
 				'public/lib/angular-ui-utils/ui-utils.js',
-				'public/lib/angular-bootstrap/ui-bootstrap-tpls.js'
-			]
+				'public/lib/angular-bootstrap/ui-bootstrap-tpls.js',
+                'https://maps.googleapis.com/maps/api/js?v=3.exp',
+                'public/lib/markerclusterer_compiled.js'
+            ]
 		},
 		css: [
 			'public/modules/**/css/*.css'
