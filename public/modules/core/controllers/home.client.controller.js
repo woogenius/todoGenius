@@ -184,6 +184,17 @@ angular.module('core').controller('HomeController', ['$scope', '$location', '$fi
 
             refreshCluster();
         })();
+
+        function handleDragStart(e) {
+            this.style.opacity = '0.4';  // this / e.target is the source node.
+        }
+
+        var cols = document.querySelectorAll('#todo-list li');
+        debugger;
+        angular.forEach(cols, function(col) {
+            debugger;
+            col.addEventListener('dragstart', handleDragStart, false);
+        });
     }
 ]);
 
