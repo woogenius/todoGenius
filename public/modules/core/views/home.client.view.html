@@ -9,11 +9,11 @@
         </header>
         <section id="main" ng-show="todos.length" data-ng-cloak>
             <input id="toggle-all" type="checkbox" data-ng-model="allChecked" data-ng-click="markAll(allChecked)">
-            <ul id="todo-list">
-                <li data-ng-repeat="todo in todos | orderBy: 'completed' | filter:statusFilter track by $index" data-ng-class="{completed: todo.completed, editing: todo == editingTodo}">
+            <ul id="todo-list" ui-on-Drop="onDrop($event,$data)">
+                <li ui-draggable ui-on-Drop="onDrop($event,$data)" drag="todo" data-ng-repeat="todo in todos | orderBy: 'completed' | filter:statusFilter track by $index" data-ng-class="{completed: todo.completed, editing: todo == editingTodo}">
                     <div class="view" data-ng-hide="todo == editingTodo">
                         <input class="toggle" type="checkbox" data-ng-model="todo.completed">
-                        <label data-ng-click="editTodo(todo)" draggable="true">{{todo.title}}</label>
+                        <label data-ng-click="editTodo(todo)">{{todo.title}}</label>
                         <button class="destroy" data-ng-click="removeTodo(todo)"></button>
                     </div>
                     <form data-ng-submit="doneEditing(todo)" data-ng-show="todo == editingTodo">
@@ -42,45 +42,3 @@
         <div id="map-canvas"></div>
     </section>
 </section>
-
-<!--<section id="todoapp" class="ng-scope">-->
-    <!--<header id="header">-->
-        <!--<h1>todos</h1>-->
-        <!--<form id="todo-form" ng-submit="addTodo()" class="ng-pristine ng-valid">-->
-            <!--<input id="new-todo" placeholder="What needs to be done?" ng-model="newTodo" autofocus="" class="ng-pristine ng-valid">-->
-        <!--</form>-->
-    <!--</header>-->
-    <!--<section id="main" ng-show="todos.length" class="">-->
-        <!--<input id="toggle-all" type="checkbox" ng-model="allChecked" ng-click="markAll(allChecked)" class="ng-valid ng-dirty">-->
-        <!--<label for="toggle-all">Mark all as complete</label>-->
-        <!--<ul id="todo-list">-->
-            <!--&lt;!&ndash; ngRepeat: todo in todos | filter:statusFilter track by $index &ndash;&gt;<li ng-repeat="todo in todos | filter:statusFilter track by $index" ng-class="{completed: todo.completed, editing: todo == editedTodo}" class="ng-scope">-->
-            <!--<div class="view">-->
-                <!--<input class="toggle ng-pristine ng-valid" type="checkbox" ng-model="todo.completed">-->
-                <!--<label ng-dblclick="editTodo(todo)" class="ng-binding">asdf</label>-->
-                <!--<button class="destroy" ng-click="removeTodo(todo)"></button>-->
-            <!--</div>-->
-            <!--<form ng-submit="doneEditing(todo)" class="ng-pristine ng-valid">-->
-                <!--<input class="edit ng-pristine ng-valid" ng-trim="false" ng-model="todo.title" todo-escape="revertEditing(todo)" ng-blur="doneEditing(todo)" todo-focus="todo == editedTodo">-->
-            <!--</form>-->
-        <!--</li>&lt;!&ndash; end ngRepeat: todo in todos | filter:statusFilter track by $index &ndash;&gt;-->
-        <!--</ul>-->
-    <!--</section>-->
-    <!--<footer id="footer" ng-show="todos.length" class="">-->
-					<!--<span id="todo-count"><strong class="ng-binding">1</strong>-->
-						<!--<ng-pluralize count="remainingCount" when="{ one: 'item left', other: 'items left' }">item left</ng-pluralize>-->
-					<!--</span>-->
-        <!--<ul id="filters">-->
-            <!--<li>-->
-                <!--<a ng-class="{selected: status == ''} " href="#/" class="selected">All</a>-->
-            <!--</li>-->
-            <!--<li>-->
-                <!--<a ng-class="{selected: status == 'active'}" href="#/active">Active</a>-->
-            <!--</li>-->
-            <!--<li>-->
-                <!--<a ng-class="{selected: status == 'completed'}" href="#/completed">Completed</a>-->
-            <!--</li>-->
-        <!--</ul>-->
-        <!--<button id="clear-completed" ng-click="clearCompletedTodos()" ng-show="completedCount" class="ng-binding ng-hide">Clear completed (0)</button>-->
-    <!--</footer>-->
-<!--</section>-->

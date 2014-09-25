@@ -17,7 +17,6 @@ angular.module('core').controller('HomeController', ['$scope', '$location', '$fi
         };
         var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
         var markers = {};
-        var markersList;
 
         $scope.$watch('todos', function (newValue, oldValue) {
             $scope.remainingCount = $filter('filter')(todos, { completed: false }).length;
@@ -185,16 +184,13 @@ angular.module('core').controller('HomeController', ['$scope', '$location', '$fi
             refreshCluster();
         })();
 
-        function handleDragStart(e) {
-            this.style.opacity = '0.4';  // this / e.target is the source node.
-        }
+        $scope.onDrop = function($event,$data){
+            var temp = todos[$data.dragEleIdx];
+            todos[$data.dragEleIdx] = todos[$data.dropEleIdx];
+            todos[$data.dropEleIdx] = temp;
+            console.log($data);
+        };
 
-        var cols = document.querySelectorAll('#todo-list li');
-        debugger;
-        angular.forEach(cols, function(col) {
-            debugger;
-            col.addEventListener('dragstart', handleDragStart, false);
-        });
     }
 ]);
 
