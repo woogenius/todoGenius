@@ -1,2 +1,8 @@
 ## 2014년 2학기 HTML5 - TodoGenius 
-issue 등록 후, 각 이슈마다 댓글로 진행사항 남겼습니다.
+
+mean.js를 기반으로 html5의 스펙을 사용하여 만든 todo리스트 입니다.
+
+사용한기술
+* localStorage
+* geolocation
+* drag and drop
