@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-	db: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://localhost/todogenius',
+	db: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://heroku_app29048495:ie3mq0o1k32dmjmssep4g6djfh@ds051368.mongolab.com:51368/heroku_app29048495',
 	assets: {
 		lib: {
 			css: [
