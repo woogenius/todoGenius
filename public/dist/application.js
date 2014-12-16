@@ -7,8 +7,7 @@ var ApplicationConfiguration = function () {
         'ngResource',
         'ui.router',
         'ui.bootstrap',
-        'ui.utils',
-        'ui.map'
+        'ui.utils'
       ];
     // Add a new vertical module
     var registerModule = function (moduleName, dependencies) {
@@ -85,7 +84,6 @@ angular.module('core').controller('HomeController', [
   '$scope',
   '$location',
   '$filter',
-  'ui.map',
   'Authentication',
   'TodoStorage',
   function ($scope, $location, $filter, Authentication, TodoStorage) {
@@ -94,6 +92,14 @@ angular.module('core').controller('HomeController', [
     $scope.newTodo = '';
     $scope.editingTodo = null;
     var todos = $scope.todos = TodoStorage.get();
+    // for google map
+    var mapOptions = {
+        zoom: 15,
+        center: new google.maps.LatLng(37.402, 127.107),
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+      };
+    var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+    var markers = {};
     $scope.$watch('todos', function (newValue, oldValue) {
       $scope.remainingCount = $filter('filter')(todos, { completed: false }).length;
       $scope.completedCount = todos.length - $scope.remainingCount;
@@ -111,6 +117,7 @@ angular.module('core').controller('HomeController', [
     });
     $scope.addTodo = function () {
       var newTodo = $scope.newTodo.trim();
+      var pos = [];
       if (!newTodo.length) {
         return;
       }
@@ -118,15 +125,55 @@ angular.module('core').controller('HomeController', [
         title: newTodo,
         completed: false
       });
+      setTodoMarker(todos.length - 1);
       $scope.newTodo = '';
     };
+    function setTodoMarker(idx) {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+          var pos = [
+              position.coords.latitude,
+              position.coords.longitude
+            ];
+          todos[idx].pos = pos;
+          var latLng = new google.maps.LatLng(pos[0], pos[1]);
+          var marker = new google.maps.Marker({
+              position: latLng,
+              map: map,
+              animation: google.maps.Animation.DROP,
+              title: todos[idx].title
+            });
+          todos[idx].markerIdx = idx;
+          markers[idx] = marker;
+          refreshCluster();
+        });
+      }
+    }
+    function refreshCluster() {
+      var markersList = [];
+      for (var key in markers) {
+        if (markers[key]) {
+          markersList.push(markers[key]);
+        }
+      }
+      var markerCluster = new MarkerClusterer(map, markersList, {
+          maxZoom: 15,
+          gridSize: 20
+        });
+    }
     $scope.editTodo = function (todo) {
       $scope.editingTodo = todo;
       // Clone the original todo to restore it on demand.
       $scope.originalTodo = angular.extend({}, todo);
     };
     $scope.removeTodo = function (todo) {
-      todos.splice(todos.indexOf(todo), 1);
+      var idx = todos.indexOf(todo);
+      if (markers[todo.markerIdx]) {
+        markers[todo.markerIdx].setMap(null);
+        markers[todo.markerIdx] = null;
+      }
+      refreshCluster();
+      todos.splice(idx, 1);
     };
     $scope.doneEditing = function (todo) {
       $scope.editingTodo = null;
@@ -148,6 +195,225 @@ angular.module('core').controller('HomeController', [
     $scope.markAll = function (completed) {
       todos.forEach(function (todo) {
         todo.completed = !completed;
+      });
+    };
+    function handleNoGeolocation(errorFlag) {
+      if (errorFlag) {
+        var content = 'Error: The Geolocation service failed.';
+      } else {
+        var content = 'Error: Your browser doesn\'t support geolocation.';
+      }
+      var options = {
+          map: map,
+          position: new google.maps.LatLng(60, 105),
+          content: content
+        };
+      var infowindow = new google.maps.InfoWindow(options);
+      map.setCenter(options.position);
+    }
+    (function getCurrentLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+          var pos = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+          map.setCenter(pos);
+        }, function () {
+          handleNoGeolocation(true);
+        });
+      } else {
+        // Browser doesn't support Geolocation
+        handleNoGeolocation(false);
+      }
+    }());
+    (function addMarker() {
+      var length = todos.length;
+      for (var i = 0; i < length; i++) {
+        if (todos[i].pos) {
+          var latLng = new google.maps.LatLng(todos[i].pos[0], todos[i].pos[1]);
+          var marker = new google.maps.Marker({
+              position: latLng,
+              map: map,
+              title: todos[i].title
+            });
+          todos[i].markerIdx = i;
+          markers[i] = marker;
+        }
+      }
+      refreshCluster();
+    }());
+    $scope.onDrop = function ($event, $data) {
+      var temp = todos[$data.dragEleIdx];
+      todos[$data.dragEleIdx] = todos[$data.dropEleIdx];
+      todos[$data.dropEleIdx] = temp;
+      console.log($data);
+    };
+  }
+]);'use strict';
+angular.module('core').directive('uiDraggable', [
+  '$parse',
+  '$rootScope',
+  function ($parse, $rootScope) {
+    return function (scope, element, attrs) {
+      element.attr('draggable', false);
+      attrs.$observe('uiDraggable', function () {
+        element.attr('draggable', !scope.todo.completed);
+      });
+      var dragData = '';
+      scope.$watch(attrs.drag, function (newValue) {
+        dragData = newValue;
+      });
+      var dummyNode;
+      // get index of element
+      var idx = scope.todos.indexOf(scope.todo);
+      var lastElementOffset;
+      element.bind('dragstart', function (e) {
+        lastElementOffset = scope.remainingCount * 63 - 2;
+        if (scope.todo.completed) {
+          e.preventDefault();
+          return;
+        }
+        $rootScope.$broadcast('ANGULAR_DRAG_START', { dragEleIdx: idx });
+        // make dummy node for drag animation
+        dummyNode = element[0].cloneNode(true);
+        var dummycss = 'position : absolute;' + 'top : -58px;' + 'width : ' + element[0].offsetWidth + 'px;' + 'pointer-events : none;' + 'transform : translate3d(0px,' + ((idx + 1) * 63 + e.offsetY - 30) + 'px, 0px);';
+        dummyNode.style.cssText = dummycss;
+        dummyNode.classList.add('dragging');
+        element[0].parentNode.appendChild(dummyNode);
+        element[0].style.opacity = 0;
+      });
+      element.bind('dragend', function (e) {
+        dummyNode.remove();
+        element[0].style.opacity = 1;
+        var sendChannel = attrs.dragChannel || 'defaultchannel';
+        $rootScope.$broadcast('ANGULAR_DRAG_END', sendChannel);
+      });
+      var prevOffset;
+      element.bind('drag', function (e) {
+        var offsetY = (idx + 1) * 63 + e.offsetY - 30;
+        if (offsetY > lastElementOffset) {
+          dummyNode.style['transform'] = 'translate3d(0px,' + lastElementOffset + 'px, 0px)';
+        } else if (offsetY < 58 && prevOffset < 58) {
+          dummyNode.style['transform'] = 'translate3d(0px,' + 58 + 'px, 0px)';
+        } else {
+          dummyNode.style['transform'] = 'translate3d(0px,' + offsetY + 'px, 0px)';
+        }
+        if (prevOffset < offsetY) {
+          $rootScope.moveup = false;
+        } else {
+          $rootScope.moveup = true;
+        }
+        prevOffset = offsetY;
+      });
+    };
+  }
+]).directive('uiOnDrop', [
+  '$parse',
+  '$rootScope',
+  function ($parse, $rootScope) {
+    return function (scope, element, attr) {
+      var dropChannel = 'defaultchannel';
+      var dragChannel = '';
+      var dragHoverClass = 'todo-hover';
+      var moveDownClass = 'todo-movedown';
+      var moveUpClass = 'todo-moveup';
+      function onDragOver(e) {
+        if (e.preventDefault) {
+          e.preventDefault();  // Necessary. Allows us to drop.
+        }
+        if (e.stopPropagation) {
+          e.stopPropagation();
+        }
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+      }
+      var dragEleIdx, dropEleIdx;
+      if (scope.todo && scope.todo.completed) {
+        dropEleIdx = scope.remainingCount - 1;
+      } else if (scope.todo) {
+        dropEleIdx = scope.todos.indexOf(scope.todo);
+      }
+      function onDragEnter(e) {
+        if (!scope.todo)
+          return;
+        console.log($rootScope.moveup);
+        if ($rootScope.moveup) {
+          if (dragEleIdx < dropEleIdx) {
+            if (scope.todo.completed)
+              return;
+            element.addClass(dragHoverClass);
+            element.removeClass(moveUpClass);
+            $rootScope.dropEleIdx = dropEleIdx;
+          } else if (dragEleIdx > dropEleIdx) {
+            element.addClass(dragHoverClass);
+            element.addClass(moveDownClass);
+            $rootScope.dropEleIdx = dropEleIdx;
+          } else {
+            console.log('drag = drop');
+          }
+          $rootScope.lastMovement = true;
+        } else {
+          if (dragEleIdx < dropEleIdx) {
+            if (scope.todo.completed)
+              return;
+            element.addClass(dragHoverClass);
+            element.addClass(moveUpClass);
+            $rootScope.dropEleIdx = dropEleIdx;
+          } else if (dragEleIdx > dropEleIdx) {
+            element.addClass(dragHoverClass);
+            element.removeClass(moveDownClass);
+            $rootScope.dropEleIdx = dropEleIdx;
+          } else {
+            console.log('drag = drop');
+          }
+          $rootScope.lastMovement = false;
+        }
+      }
+      function onDrop(e) {
+        if (scope.todo)
+          return;
+        if (e.preventDefault) {
+          e.preventDefault();  // Necessary. Allows us to drop.
+        }
+        if (e.stopPropagation) {
+          e.stopPropagation();  // Necessary. Allows us to drop.
+        }
+        debugger;
+        //                    console.log($rootScope.lastMovement);
+        //                    if($rootScope.lastMovement) {
+        //                        $rootScope.dropEleIdx--;
+        //                    }
+        var data = {
+            dragEleIdx: dragEleIdx,
+            dropEleIdx: $rootScope.dropEleIdx
+          };
+        var fn = $parse(attr.uiOnDrop);
+        scope.$apply(function () {
+          fn(scope, {
+            $data: data,
+            $event: e
+          });
+        });
+      }
+      $rootScope.$on('ANGULAR_DRAG_START', function (event, data) {
+        dragEleIdx = data.dragEleIdx;
+        element.bind('dragover', onDragOver);
+        element.bind('dragenter', onDragEnter);
+        element.bind('drop', onDrop);
+      });
+      $rootScope.$on('ANGULAR_DRAG_END', function (e, channel) {
+        dragChannel = '';
+        if (dropChannel === channel) {
+          element.unbind('dragover', onDragOver);
+          element.unbind('dragenter', onDragEnter);
+          element.unbind('drop', onDrop);
+          element.removeClass(dragHoverClass);
+          element.removeClass(moveUpClass);
+          element.removeClass(moveDownClass);
+        }
+      });
+      attr.$observe('dropChannel', function (value) {
+        if (value) {
+          dropChannel = value;
+        }
       });
     };
   }
